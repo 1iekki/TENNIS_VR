@@ -5765,6 +5765,11 @@ Camera:
   m_CorrespondingSourceObject: {fileID: 1767192439, guid: f6336ac4ac8b4d34bc5072418cdc62a0, type: 3}
   m_PrefabInstance: {fileID: 246687874}
   m_PrefabAsset: {fileID: 0}
+--- !u!4 &684305704 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 1680501587, guid: f6336ac4ac8b4d34bc5072418cdc62a0, type: 3}
+  m_PrefabInstance: {fileID: 246687874}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &705507993
 GameObject:
   m_ObjectHideFlags: 0
@@ -8133,6 +8138,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::GameManager
   ballPrefab: {fileID: 8651991220898567088, guid: 2a0229a0d2b38694888b99c42b719f15, type: 3}
   ballSpawnPoint: {fileID: 6360023}
+  ballSpawnPointLeft: {fileID: 0}
+  ballSpawnPointRight: {fileID: 0}
+  PlayerPos: {fileID: 684305704}
   minSpeed: 3
   maxSpeed: 15
   speedIncrement: 1
@@ -8164,6 +8172,9 @@ MonoBehaviour:
   correctHits: 0
   fastBallHits: 0
   totalBalls: 0
+  arrowCenter: {fileID: 0}
+  arrowLeft: {fileID: 0}
+  arrowRight: {fileID: 0}
 --- !u!4 &1938152898
 Transform:
   m_ObjectHideFlags: 0
