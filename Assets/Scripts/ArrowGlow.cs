@@ -27,25 +27,59 @@ public class ArrowAffordanceGlow : MonoBehaviour
         new Part { materialIndex = 0, rimColorProperty = "_RimColor", rimPowerProperty = "_RimPower" }
     };
 
-    [Header("Glow look")]
+    [Header("Static Glow")]
     [SerializeField] private Color glowColor = Color.cyan;
     [SerializeField] private float glowPower = 2.5f;
+
+    [Header("Animated Glow (for inactivity)")]
+    [SerializeField] private Color animatedGlowColor = Color.cyan;
+    [SerializeField] private float animatedGlowMaxPower = 5.0f;
+    [SerializeField] private float animatedGlowMinPower = 2.5f;
+    [SerializeField] private float glowAnimationSpeed = 2.0f;
 
     [SerializeField] private Color offColor = Color.black;
     [SerializeField] private float offPower = 0f;
 
     private MaterialPropertyBlock _mpb;
+    private bool isAnimatingGlow = false;
+    private float glowTimer = 0f;
 
     void Awake()
     {
         _mpb = new MaterialPropertyBlock();
     }
 
+    void Update()
+    {
+        if (isAnimatingGlow)
+        {
+            glowTimer += Time.deltaTime;
+            float glowIntensity = Mathf.PingPong(glowTimer * glowAnimationSpeed, 1f);
+            float animatedPower = Mathf.Lerp(animatedGlowMinPower, animatedGlowMaxPower, glowIntensity);
+            Apply(animatedGlowColor, animatedPower);
+        }
+    }
+
     public void SetGlow(bool on)
     {
+        isAnimatingGlow = false;
         var c = on ? glowColor : offColor;
         var p = on ? glowPower : offPower;
         Apply(c, p);
+    }
+
+    public void SetAnimatedGlow(bool on)
+    {
+        isAnimatingGlow = on;
+        if (!on)
+        {
+            glowTimer = 0f;
+            Apply(offColor, offPower);
+        }
+        else
+        {
+            glowTimer = 0f;
+        }
     }
 
     public void Apply(Color rimColor, float rimPower)
@@ -68,4 +102,6 @@ public class ArrowAffordanceGlow : MonoBehaviour
     // Optional convenience methods
     public void GlowOn() => SetGlow(true);
     public void GlowOff() => SetGlow(false);
+    public void AnimatedGlowOn() => SetAnimatedGlow(true);
+    public void AnimatedGlowOff() => SetAnimatedGlow(false);
 }
