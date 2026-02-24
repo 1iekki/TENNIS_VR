@@ -83,7 +83,7 @@ public class GameManager : MonoBehaviour
         arrowCenter.SetGlow(on);
         if (on) currentActiveArrow = arrowCenter;
     }
-    
+
     public void GlowLeft(bool on)
     {
         if (arrowLeft == null) return;
@@ -92,7 +92,7 @@ public class GameManager : MonoBehaviour
         arrowLeft.SetGlow(on);
         if (on) currentActiveArrow = arrowLeft;
     }
-    
+
     public void GlowRight(bool on)
     {
         if (arrowRight == null) return;
@@ -136,7 +136,7 @@ public class GameManager : MonoBehaviour
 
     IEnumerator ShowIntroduction()
     {
-        
+
         if (introductionText != null)
         {
             introductionText.gameObject.SetActive(true);
@@ -412,7 +412,7 @@ public class GameManager : MonoBehaviour
         // Check for badge unlock (10 hits)
         if (correctHits == 10 && badgeNotification != null)
         {
-            StartCoroutine(ShowBadgeNotification("Backhand Badge Earned!"));
+            StartCoroutine(ShowBadgeNotification("badge"));
         }
 
         // Increase difficulty progressively
@@ -622,7 +622,7 @@ public class GameManager : MonoBehaviour
         if (badgeNotification != null)
         {
             TextMeshProUGUI badgeText = badgeNotification.GetComponentInChildren<TextMeshProUGUI>();
-            if (badgeText != null)
+            if (badgeText == null)
                 badgeText.text = message;
 
             badgeNotification.SetActive(true);
@@ -663,6 +663,17 @@ public class GameManager : MonoBehaviour
             int seconds = Mathf.FloorToInt(timeRemaining % 60);
             timerText.text = $"{minutes:00}:{seconds:00}";
         }
+    }
+
+    public void spawnRateUp()
+    {
+        spawnDelay -= 0.1f;
+    }
+
+
+    public void spawnRateDown()
+    {
+        spawnDelay += 0.1f;
     }
 
     void EndGame()
@@ -716,8 +727,40 @@ public class GameManager : MonoBehaviour
 
     public void SetTrajectoryGuides(bool enabled)
     {
-        // Trajectory guides are automatically shown after missing 2+ balls
-        // This can be adjusted by changing missesBeforeSimplify
+        foreach (GameObject ball in activeBalls)
+        {
+            if (ball != null)
+            {
+                EnhancedBallController bc = ball.GetComponent<EnhancedBallController>();
+                if (bc != null)
+                {
+                    bc.EnableTrajectoryGuide(enabled);
+                }
+            }
+        }
+    }
+
+    public void ToggleTrajectoryGuides()
+    {
+        foreach (GameObject ball in activeBalls)
+        {
+            if (ball != null)
+            {
+                EnhancedBallController bc = ball.GetComponent<EnhancedBallController>();
+                if (bc != null)
+                {
+                    if (bc.trajectoryLine.enabled)
+                    {
+                        bc.EnableTrajectoryGuide(false);
+                    }
+                    else
+                    {
+                        bc.EnableTrajectoryGuide(true);
+                    }
+
+                }
+            }
+        }
     }
 
     public void SetAudioVolume(float volume)
