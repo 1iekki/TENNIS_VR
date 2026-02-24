@@ -73,10 +73,34 @@ public class GameManager : MonoBehaviour
     [SerializeField] private ArrowAffordanceGlow arrowRight;
 
     private bool arrows = false;
+    private ArrowAffordanceGlow currentActiveArrow = null;
 
-    public void GlowCenter(bool on) => arrowCenter.SetGlow(on);
-    public void GlowLeft(bool on) => arrowLeft.SetGlow(on);
-    public void GlowRight(bool on) => arrowRight.SetGlow(on);
+    public void GlowCenter(bool on)
+    {
+        if (arrowCenter == null) return;
+        if (currentActiveArrow != null && currentActiveArrow != arrowCenter)
+            currentActiveArrow.SetAnimatedGlow(false);
+        arrowCenter.SetGlow(on);
+        if (on) currentActiveArrow = arrowCenter;
+    }
+    
+    public void GlowLeft(bool on)
+    {
+        if (arrowLeft == null) return;
+        if (currentActiveArrow != null && currentActiveArrow != arrowLeft)
+            currentActiveArrow.SetAnimatedGlow(false);
+        arrowLeft.SetGlow(on);
+        if (on) currentActiveArrow = arrowLeft;
+    }
+    
+    public void GlowRight(bool on)
+    {
+        if (arrowRight == null) return;
+        if (currentActiveArrow != null && currentActiveArrow != arrowRight)
+            currentActiveArrow.SetAnimatedGlow(false);
+        arrowRight.SetGlow(on);
+        if (on) currentActiveArrow = arrowRight;
+    }
     void Awake()
     {
         if (Instance == null) Instance = this;
@@ -112,13 +136,10 @@ public class GameManager : MonoBehaviour
 
     IEnumerator ShowIntroduction()
     {
-        string message = "The ball will begin moving slowly. Then it will get a little faster. " +
-                        "Watch the color to know the speed. Try to hit each ball calmly.";
-
+        
         if (introductionText != null)
         {
             introductionText.gameObject.SetActive(true);
-            introductionText.text = message;
         }
 
         // Play intro narration audio if available (separate from voice praise)
@@ -481,7 +502,7 @@ public class GameManager : MonoBehaviour
         if (softChime != null && !softChime.isPlaying)
             softChime.Play();
 
-        // Make balls glow
+        // Make balls glow with animated effect
         foreach (GameObject ball in activeBalls)
         {
             if (ball != null)
@@ -493,6 +514,10 @@ public class GameManager : MonoBehaviour
                 }
             }
         }
+
+        // Make the currently active arrow glow with animated effect
+        if (currentActiveArrow != null)
+            currentActiveArrow.SetAnimatedGlow(true);
 
         // Glow racket
         if (glowRacketEffect != null && !glowRacketEffect.activeInHierarchy)
