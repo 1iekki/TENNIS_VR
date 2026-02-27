@@ -315,7 +315,15 @@ public class GameManager : MonoBehaviour
 
         if (bc != null)
         {
-            bc.speed = currentSpeed;
+
+            float speedForThisBall = currentSpeed;
+            if (currentScenario == ScenarioType.S5)
+            {
+                speedForThisBall = Random.Range(minSpeed, maxSpeed);
+            }
+
+            bc.speed = speedForThisBall;
+
             bc.direction = direction;
 
             // Enable trajectory guide ONLY if player has missed enough balls
