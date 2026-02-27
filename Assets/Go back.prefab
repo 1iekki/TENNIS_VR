@@ -244,7 +244,7 @@ MonoBehaviour:
   m_FallbackScreenDPI: 96
   m_DefaultSpriteDPI: 96
   m_DynamicPixelsPerUnit: 1
-  m_PresetInfoIsWorld: 0
+  m_PresetInfoIsWorld: 1
 --- !u!114 &9046090718269317576
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -371,7 +371,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f652c3a080f7df246bf6c1827fcee61e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  menuScene: {fileID: 102900000, guid: 4e9fef26e6adb88479ad1b9834a32d94, type: 3}
+  menuSceneName: BasicScene
   m_StepButtonTextField: {fileID: 0}
 --- !u!1 &430191173546967117
 GameObject:
@@ -1094,7 +1094,7 @@ MonoBehaviour:
           m_FloatArgument: 0
           m_StringArgument: 
           m_BoolArgument: 0
-        m_CallState: 0
+        m_CallState: 1
 --- !u!114 &6611721358282003623
 MonoBehaviour:
   m_ObjectHideFlags: 0

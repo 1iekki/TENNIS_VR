@@ -13,14 +13,14 @@ namespace Unity.VRTemplate
     public class GoBackToMenu : MonoBehaviour
     {
         [SerializeField]
-        public SceneAsset menuScene;
+        public string menuSceneName;
 
         [SerializeField]
         public TextMeshProUGUI m_StepButtonTextField;
 
         public void LoadScene()
         {
-            SceneManager.LoadScene(menuScene.name, LoadSceneMode.Single);
+            SceneManager.LoadScene(menuSceneName, LoadSceneMode.Single);
         }
     }
 }

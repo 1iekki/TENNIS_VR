@@ -23,7 +23,7 @@ namespace Unity.VRTemplate
         }
 
         [SerializeField]
-        public List<SceneAsset> scenes;
+        public List<string> sceneNames;
 
         [SerializeField]
         public TextMeshProUGUI m_StepButtonTextField;
@@ -43,8 +43,8 @@ namespace Unity.VRTemplate
 
         public void LoadScene(int index)
         {
-            SceneAsset scene = scenes[index];
-            SceneManager.LoadScene(scene.name, LoadSceneMode.Single);
+            string scene = sceneNames[index];
+            SceneManager.LoadScene(scene, LoadSceneMode.Single);
         }
     }
 }

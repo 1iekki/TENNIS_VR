@@ -377,12 +377,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6fc0d34940dd44129c17bc6d4396b866, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  scenes:
-  - {fileID: 102900000, guid: a4ffa927abd13ca4d8ae0fabf7d0a1f3, type: 3}
-  - {fileID: 102900000, guid: f9b54d400b064ae43a0d80ea54d87adc, type: 3}
-  - {fileID: 102900000, guid: d392d84918f852343aaa3389dd659e37, type: 3}
-  - {fileID: 102900000, guid: 7af55ae9f937fce448f7b3cb9870a9c3, type: 3}
-  - {fileID: 102900000, guid: b107a3b70413e444b8cbaf1808b30dd7, type: 3}
+  sceneNames:
+  - Scenario1
+  - Scenario2
+  - Scenario3
+  - Scenario4
+  - Scenario5
   m_StepButtonTextField: {fileID: 2296294668767524352}
   m_StepList:
   - stepObject: {fileID: 8360647749161130007}

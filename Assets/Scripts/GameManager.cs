@@ -266,7 +266,7 @@ public class GameManager : MonoBehaviour
 
         // Check VR controller menu button (works with XR Toolkit)
         pausePressed = pausePressed || CheckVRMenuButtonDown();
-
+        if (pausePressed) Debug.Log("Menu button detected");
         if (pausePressed)
         {
             // Only allow pausing after intro is gone
@@ -620,10 +620,16 @@ public class GameManager : MonoBehaviour
         {
             if(isBackToMenuVisible) { 
                 BackToMenu.SetActive(false);
+                isBackToMenuVisible = false;
+                isPaused = false;
+                Time.timeScale = 1f;
             }
             else
             {
+                isBackToMenuVisible = true;
                 BackToMenu.SetActive(true);
+                isPaused = true;
+                Time.timeScale = 0f;
             }
         }
     }
