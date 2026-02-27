@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
 using TMPro;
+using UnityEditor;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 namespace Unity.VRTemplate
 {
@@ -21,6 +23,9 @@ namespace Unity.VRTemplate
         }
 
         [SerializeField]
+        public List<SceneAsset> scenes;
+
+        [SerializeField]
         public TextMeshProUGUI m_StepButtonTextField;
 
         [SerializeField]
@@ -34,6 +39,12 @@ namespace Unity.VRTemplate
             m_CurrentStepIndex = (m_CurrentStepIndex + 1) % m_StepList.Count;
             m_StepList[m_CurrentStepIndex].stepObject.SetActive(true);
             m_StepButtonTextField.text = m_StepList[m_CurrentStepIndex].buttonText;
+        }
+
+        public void LoadScene(int index)
+        {
+            SceneAsset scene = scenes[index];
+            SceneManager.LoadScene(scene.name, LoadSceneMode.Single);
         }
     }
 }

@@ -1,8 +1,9 @@
-using UnityEngine;
-using TMPro;
+using Mono.Cecil;
 using System.Collections;
 using System.Collections.Generic;
-using Mono.Cecil;
+using TMPro;
+using UnityEngine;
+using UnityEngine.XR;
 
 public class GameManager : MonoBehaviour
 {
@@ -36,12 +37,14 @@ public class GameManager : MonoBehaviour
     private int consecutiveMisses = 0;
     private Queue<GameObject> activeBalls = new Queue<GameObject>();
 
-    [Header("UI Elements")]
-    public TextMeshProUGUI scoreText;
-    public TextMeshProUGUI speedLevelText;
-    public TextMeshProUGUI timerText;
-    public TextMeshProUGUI introductionText;
-    public TextMeshProUGUI feedbackText;
+    [Header("UI Elements (Parents that have RawImage + TextMeshProUGUI child)")]
+    public GameObject scoreTextObject;
+    public GameObject speedLevelTextObject;
+    public GameObject timerTextObject;
+    public GameObject introductionTextObject;
+    public GameObject feedbackTextObject;
+    public GameObject BackToMenu;
+
     public AudioSource introNarrationAudio;
     public GameObject badgeNotification;
     public GameObject pauseMenu;
@@ -81,6 +84,15 @@ public class GameManager : MonoBehaviour
     private bool arrows = false;
     private ArrowAffordanceGlow currentActiveArrow = null;
 
+    // Cached TMP components (resolved from the parent GameObjects)
+    private TextMeshProUGUI scoreText;
+    private TextMeshProUGUI speedLevelText;
+    private TextMeshProUGUI timerText;
+    private TextMeshProUGUI introductionText;
+    private TextMeshProUGUI feedbackText;
+
+    private bool isBackToMenuVisible = false;
+
     public void GlowCenter(bool on)
     {
         if (arrowCenter == null) return;
@@ -107,11 +119,83 @@ public class GameManager : MonoBehaviour
         arrowRight.SetGlow(on);
         if (on) currentActiveArrow = arrowRight;
     }
+
     void Awake()
     {
         if (Instance == null) Instance = this;
+
+        // Cache TMP components from their parents (works even if parents are inactive)
+        scoreText = GetTextFromParent(scoreTextObject, nameof(scoreTextObject));
+        speedLevelText = GetTextFromParent(speedLevelTextObject, nameof(speedLevelTextObject));
+        timerText = GetTextFromParent(timerTextObject, nameof(timerTextObject));
+        introductionText = GetTextFromParent(introductionTextObject, nameof(introductionTextObject));
+        feedbackText = GetTextFromParent(feedbackTextObject, nameof(feedbackTextObject));
+
         currentSpeed = minSpeed;
         timeRemaining = gameTime;
+
+        // Ensure initial UI state is correct even if scene starts mid-test
+        ApplyUIState(introActive: true, gameplayUIActive: false);
+        HideFeedbackImmediate();
+    }
+
+    private TextMeshProUGUI GetTextFromParent(GameObject parent, string fieldName)
+    {
+        if (parent == null) return null;
+
+        TextMeshProUGUI tmp = parent.GetComponentInChildren<TextMeshProUGUI>(true);
+        if (tmp == null)
+        {
+            Debug.LogWarning($"GameManager: '{fieldName}' is set but no TextMeshProUGUI component was found in children of '{parent.name}'.");
+        }
+        return tmp;
+    }
+
+    private void SetActiveSafe(GameObject go, bool active)
+    {
+        if (go != null) go.SetActive(active);
+    }
+
+    /// Central place controlling visibility of Intro vs Gameplay HUD.
+    /// (Does NOT touch pause/overstimulation overlays.)
+    private void ApplyUIState(bool introActive, bool gameplayUIActive)
+    {
+        // Intro
+        SetActiveSafe(introductionTextObject, introActive);
+
+        // Gameplay HUD
+        SetActiveSafe(scoreTextObject, gameplayUIActive);
+        SetActiveSafe(speedLevelTextObject, gameplayUIActive);
+        SetActiveSafe(timerTextObject, gameplayUIActive);
+    }
+
+    private bool IsIntroShowing()
+    {
+        // If there's an intro parent, trust that; otherwise fall back to TMP object.
+        if (introductionTextObject != null) return introductionTextObject.activeSelf;
+        return introductionText != null && introductionText.gameObject.activeSelf;
+    }
+
+    private void ShowFeedback(string message, float durationSeconds = 2f)
+    {
+        if (feedbackTextObject == null || feedbackText == null) return;
+
+        StopCoroutine(nameof(HideFeedbackAfterDelay));
+        feedbackText.text = message;
+        feedbackTextObject.SetActive(true);
+        StartCoroutine(HideFeedbackAfterDelay(durationSeconds));
+    }
+
+    private IEnumerator HideFeedbackAfterDelay(float seconds)
+    {
+        yield return new WaitForSeconds(seconds);
+        HideFeedbackImmediate();
+    }
+
+    private void HideFeedbackImmediate()
+    {
+        if (feedbackTextObject != null)
+            feedbackTextObject.SetActive(false);
     }
 
     void Start()
@@ -124,29 +208,22 @@ public class GameManager : MonoBehaviour
             arrows = true;
         }
 
-        // Hide gameplay UI during introduction
-        if (scoreText != null) scoreText.gameObject.SetActive(false);
-        if (speedLevelText != null) speedLevelText.gameObject.SetActive(false);
-        if (timerText != null) timerText.gameObject.SetActive(false);
-
-        // Show introduction
-        if (introductionText != null)
+        // If we have intro text, show intro flow; otherwise start immediately with gameplay UI
+        if (introductionText != null && introductionTextObject != null)
         {
             StartCoroutine(ShowIntroduction());
         }
         else
         {
+            ApplyUIState(introActive: false, gameplayUIActive: true);
             StartGameplay();
         }
     }
 
     IEnumerator ShowIntroduction()
     {
-
-        if (introductionText != null)
-        {
-            introductionText.gameObject.SetActive(true);
-        }
+        // Intro on, gameplay HUD off
+        ApplyUIState(introActive: true, gameplayUIActive: false);
 
         // Play intro narration audio if available (separate from voice praise)
         if (introNarrationAudio != null)
@@ -156,16 +233,8 @@ public class GameManager : MonoBehaviour
 
         yield return new WaitForSeconds(8f);
 
-        // Hide introduction text
-        if (introductionText != null)
-        {
-            introductionText.gameObject.SetActive(false);
-        }
-
-        // Show gameplay UI
-        if (scoreText != null) scoreText.gameObject.SetActive(true);
-        if (speedLevelText != null) speedLevelText.gameObject.SetActive(true);
-        if (timerText != null) timerText.gameObject.SetActive(true);
+        // Intro off, gameplay HUD on
+        ApplyUIState(introActive: false, gameplayUIActive: true);
 
         StartGameplay();
     }
@@ -186,7 +255,7 @@ public class GameManager : MonoBehaviour
         bool pausePressed = false;
 
 #if ENABLE_LEGACY_INPUT_MANAGER
-            pausePressed = Input.GetKeyDown(KeyCode.Escape) || Input.GetKeyDown(KeyCode.P);
+        pausePressed = Input.GetKeyDown(KeyCode.Escape) || Input.GetKeyDown(KeyCode.P);
 #endif
 
 #if ENABLE_INPUT_SYSTEM
@@ -196,13 +265,14 @@ public class GameManager : MonoBehaviour
 #endif
 
         // Check VR controller menu button (works with XR Toolkit)
-        pausePressed = pausePressed || CheckVRMenuButton();
+        pausePressed = pausePressed || CheckVRMenuButtonDown();
 
         if (pausePressed)
         {
-            if (isGameActive && introductionText != null && !introductionText.gameObject.activeSelf)
+            // Only allow pausing after intro is gone
+            if (isGameActive && !IsIntroShowing())
             {
-                TogglePause();
+                ToggleBackToMenu();
             }
         }
 
@@ -301,9 +371,8 @@ public class GameManager : MonoBehaviour
             }
         }
 
-
         Vector3 PlPos = (PlayerPos.position);
-        if(currentScenario != ScenarioType.S1 && currentScenario != ScenarioType.S2)
+        if (currentScenario != ScenarioType.S1 && currentScenario != ScenarioType.S2)
         {
             PlPos += Vector3.right * Random.Range(-1.0f, 1.0f);
         }
@@ -315,7 +384,6 @@ public class GameManager : MonoBehaviour
 
         if (bc != null)
         {
-
             float speedForThisBall = currentSpeed;
             if (currentScenario == ScenarioType.S5)
             {
@@ -323,7 +391,6 @@ public class GameManager : MonoBehaviour
             }
 
             bc.speed = speedForThisBall;
-
             bc.direction = direction;
 
             // Enable trajectory guide ONLY if player has missed enough balls
@@ -463,11 +530,8 @@ public class GameManager : MonoBehaviour
                 }
             }
 
-            // Show helpful message
-            if (scoreText != null)
-            {
-                StartCoroutine(ShowTemporaryMessage("Don't worry! Let's try slower."));
-            }
+            // Show helpful message (use feedback panel, not score panel)
+            ShowFeedback("Don't worry! Let's try slower.", 2f);
         }
     }
 
@@ -548,6 +612,20 @@ public class GameManager : MonoBehaviour
     {
         if (glowRacketEffect != null)
             glowRacketEffect.SetActive(false);
+    }
+
+    void ToggleBackToMenu()
+    {
+        if (BackToMenu != null)
+        {
+            if(isBackToMenuVisible) { 
+                BackToMenu.SetActive(false);
+            }
+            else
+            {
+                BackToMenu.SetActive(true);
+            }
+        }
     }
 
     public void OnPlayerOverstimulated()
@@ -638,24 +716,13 @@ public class GameManager : MonoBehaviour
     {
         if (badgeNotification != null)
         {
-            TextMeshProUGUI badgeText = badgeNotification.GetComponentInChildren<TextMeshProUGUI>();
-            if (badgeText == null)
+            TextMeshProUGUI badgeText = badgeNotification.GetComponentInChildren<TextMeshProUGUI>(true);
+            if (badgeText != null)
                 badgeText.text = message;
 
             badgeNotification.SetActive(true);
             yield return new WaitForSeconds(3f);
             badgeNotification.SetActive(false);
-        }
-    }
-
-    IEnumerator ShowTemporaryMessage(string message)
-    {
-        if (feedbackText != null)
-        {
-            feedbackText.gameObject.SetActive(true);
-            feedbackText.text = message;
-            yield return new WaitForSeconds(2f);
-            feedbackText.gameObject.SetActive(false);
         }
     }
 
@@ -687,7 +754,6 @@ public class GameManager : MonoBehaviour
         spawnDelay -= 0.1f;
     }
 
-
     public void spawnRateDown()
     {
         spawnDelay += 0.1f;
@@ -710,18 +776,23 @@ public class GameManager : MonoBehaviour
         }
         activeBalls.Clear();
 
-        // Show final stats
+        // Show final stats (keep score panel visible, hide speed/timer)
+        if (scoreTextObject != null) scoreTextObject.SetActive(true);
+
         if (scoreText != null)
         {
             float accuracy = totalBalls > 0 ? (float)correctHits / totalBalls * 100f : 0;
             scoreText.text = $"Game Over!\nHits: {correctHits}\nAccuracy: {accuracy:F1}%";
         }
 
-        // Hide other UI
-        if (speedLevelText != null)
-            speedLevelText.gameObject.SetActive(false);
-        if (timerText != null)
-            timerText.gameObject.SetActive(false);
+        if (speedLevelTextObject != null)
+            speedLevelTextObject.SetActive(false);
+        if (timerTextObject != null)
+            timerTextObject.SetActive(false);
+
+        // Also ensure intro + feedback are not showing
+        if (introductionTextObject != null) introductionTextObject.SetActive(false);
+        HideFeedbackImmediate();
 
         // Play celebration if did well
         if (correctHits >= 10 && voicePraise != null)
@@ -774,7 +845,6 @@ public class GameManager : MonoBehaviour
                     {
                         bc.EnableTrajectoryGuide(true);
                     }
-
                 }
             }
         }
@@ -849,38 +919,43 @@ public class GameManager : MonoBehaviour
 #endif
     }
 
-    bool CheckVRMenuButton()
+    bool CheckVRMenuButtonDown()
     {
-        // Check for VR controller menu button press (typically left controller menu button)
-        // This works with XR Interaction Toolkit
+        return CheckMenuDownForHand(InputDeviceCharacteristics.Left) ||
+               CheckMenuDownForHand(InputDeviceCharacteristics.Right);
+    }
 
-#if ENABLE_INPUT_SYSTEM && UNITY_XR_MANAGEMENT
-        try
+    bool prevMenuPressedLeft;
+    bool prevMenuPressedRight;
+
+    bool CheckMenuDownForHand(InputDeviceCharacteristics hand)
+    {
+        var devices = new List<InputDevice>();
+        InputDevices.GetDevicesWithCharacteristics(hand | InputDeviceCharacteristics.Controller, devices);
+
+        bool pressedNow = false;
+        for (int i = 0; i < devices.Count; i++)
         {
-            var leftHandDevices = new List<UnityEngine.InputSystem.InputDevice>();
-            UnityEngine.InputSystem.InputSystem.GetDevicesWithCharacteristics(
-                UnityEngine.XR.InputDeviceCharacteristics.Left | UnityEngine.XR.InputDeviceCharacteristics.Controller,
-                leftHandDevices);
-            
-            foreach (var device in leftHandDevices)
+            if (devices[i].TryGetFeatureValue(CommonUsages.menuButton, out bool pressed) && pressed)
             {
-                if (device is UnityEngine.XR.XRController xrController)
-                {
-                    // Check menu button
-                    var menuButton = xrController["menu"];
-                    if (menuButton != null && menuButton.IsPressed())
-                    {
-                        return true;
-                    }
-                }
+                pressedNow = true;
+                break;
             }
         }
-        catch
-        {
-            // XR not available or not initialized
-        }
-#endif
 
-        return false;
+        // edge detect
+        if (hand == InputDeviceCharacteristics.Left)
+        {
+            bool down = pressedNow && !prevMenuPressedLeft;
+            prevMenuPressedLeft = pressedNow;
+            return down;
+        }
+        else
+        {
+            bool down = pressedNow && !prevMenuPressedRight;
+            prevMenuPressedRight = pressedNow;
+            return down;
+        }
     }
+
 }
