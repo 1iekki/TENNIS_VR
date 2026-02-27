@@ -2,10 +2,16 @@ using UnityEngine;
 using TMPro;
 using System.Collections;
 using System.Collections.Generic;
+using Mono.Cecil;
 
 public class GameManager : MonoBehaviour
 {
     public static GameManager Instance;
+
+    public enum ScenarioType { S1, S2, S3, S4, S5 }
+
+    [Header("Scenario Settings")]
+    public ScenarioType currentScenario = ScenarioType.S1;
 
     [Header("Ball Settings")]
     public GameObject ballPrefab;
@@ -297,7 +303,10 @@ public class GameManager : MonoBehaviour
 
 
         Vector3 PlPos = (PlayerPos.position);
-        PlPos += Vector3.right * Random.Range(-1.0f, 1.0f);
+        if(currentScenario != ScenarioType.S1 && currentScenario != ScenarioType.S2)
+        {
+            PlPos += Vector3.right * Random.Range(-1.0f, 1.0f);
+        }
 
         Vector3 direction = (PlPos - spawnPos).normalized;
 
